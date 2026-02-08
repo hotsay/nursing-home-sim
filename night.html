@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>요양원 야간근무 수지분석기 PRO</title>
+    <style>
+        :root {
+            --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --danger: #e74c3c; --bg: #f1f4f9;
+        }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        
+        .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .card { background: var(--primary); color: white; padding: 20px; border-radius: 12px; text-align: center; }
+        .card h3 { margin: 0; font-size: 0.95rem; opacity: 0.8; margin-bottom: 8px; }
+        .card .value { font-size: 1.8rem; font-weight: bold; color: #fff; }
+        .card.result-plus { background: var(--success); }
+        .card.result-minus { background: var(--danger); }
+
+        .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        section { background: #fff; border: 1px solid #e0e6ed; padding: 25px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        h2 { font-size: 1.3rem; color: var(--primary); border-left: 5px solid var(--accent); padding-left: 12px; margin-bottom: 20px; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        th, td { border: 1px solid #eee; padding: 12px; text-align: center; font-size: 0.95rem; }
+        th { background: #f8f9fa; color: #666; font-weight: 600; }
+        input { width: 90%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; text-align: right; font-weight: bold; font-size: 1rem; }
+        
+        .sub-total { background: #fdf6e3; font-weight: bold; }
+        .info-box { background: #f1f9ff; border: 1px solid #d1e9ff; padding: 15px; border-radius: 8px; font-size: 0.9rem; line-height: 1.6; color: #2c3e50; }
+        .analysis-res { font-size: 1.2rem; font-weight: bold; margin-top: 15px; text-align: center; padding: 15px; border-radius: 8px; }
+        
+        .highlight { color: var(--accent); font-weight: bold; }
+        .text-danger { color: var(--danger); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 style="text-align:center; color:var(--primary); margin-top:0; margin-bottom:30px;">🌙 야간근무 배치 및 수지분석 시뮬레이터</h1>
+
+    <div class="dashboard">
+        <div class="card">
+            <h3>야간 가산 수입 (A)</h3>
+            <div id="disp-income" class="value">0</div>
+            <small>한달 총액</small>
+        </div>
+        <div class="card">
+            <h3>야간 인건비 총계 (B)</h3>
+            <div id="disp-labor" class="value">0</div>
+            <small>보험/퇴직금 포함</small>
+        </div>
+        <div id="profit-card" class="card">
+            <h3>야간 운영 수지 (A - B)</h3>
+            <div id="disp-profit" class="value">0</div>
+            <small>수익/손실 분석</small>
+        </div>
+        <div class="card highlight">
+            <h3>가산 기준점 (1점)</h3>
+            <div id="disp-base-point" class="value">0</div>
+            <small>(월 수가 합계 / 인원) × 0.8</small>
+        </div>
+    </div>
+
+    <div class="main-grid">
+        <section>
+            <h2>1. 가산 기준점 산출 (일반실 등급 구성)</h2>
+            <table>
+                <thead>
+                    <tr><th>등급</th><th>인원(명)</th><th>일당 수가(원)</th><th>월 수입액(30일)</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>1등급</td><td><input type="number" id="in-c1" value="5" oninput="calc()"></td><td>93,070</td><td id="res-c1">0</td></tr>
+                    <tr><td>2등급</td><td><input type="number" id="in-c2" value="13" oninput="calc()"></td><td>86,340</td><td id="res-c2">0</td></tr>
+                    <tr><td>3~5등급</td><td><input type="number" id="in-c3" value="34" oninput="calc()"></td><td>81,540</td><td id="res-c3">0</td></tr>
+                    <tr class="sub-total">
+                        <td><b>합계</b></td>
+                        <td id="total-cnt">0</td>
+                        <td>-</td>
+                        <td id="total-inc">0</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="info-box">
+                기준금액 = (일반실 월 총수가 / 입소자 수) × 0.8<br>
+                현재 산출된 1점당 금액: <span id="base-point-val" class="highlight">0</span> 원
+            </div>
+        </section>
+
+        <section>
+            <h2>2. 야간 근무자 시간 배치</h2>
+            <p style="font-size:0.85rem; color:#666; margin-bottom:10px;">* 22시 ~ 06시 사이 실제 근로시간(휴게 제외)을 입력하세요.</p>
+            <table>
+                <thead>
+                    <tr><th>구분</th><th>실근무(h)</th><th>인원(명)</th><th>합계 시간(일)</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><b>야간 인력</b></td>
+                        <td><input type="number" id="work-h" value="5" oninput="calc()"></td>
+                        <td><input type="number" id="staff-c" value="3" oninput="calc()"></td>
+                        <td id="total-hours-day" style="font-weight:bold; color:var(--accent);">0 h</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="info-box" style="background:#fff9db; border-color:#ffeeba;">
+                <b>[지출 분석 - 순수 야간수당]</b><br>
+                일일 야간수당: <span id="labor-day-pure">0</span> 원<br>
+                월 야간수당: <span id="labor-month-pure">0</span> 원
+            </div>
+        </section>
+
+        <section>
+            <h2>3. 인건비 상세 (4대보험/퇴직금 포함)</h2>
+            <table>
+                <thead>
+                    <tr><th>항목</th><th>금액 (월 기준)</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>순수 야간수당 (기본)</td><td id="pure-wage">0</td></tr>
+                    <tr><td>4대보험 회사부담분 (9%)</td><td id="ins-wage">0</td></tr>
+                    <tr><td>퇴직적립금 (1/12)</td><td id="ret-wage">0</td></tr>
+                    <tr class="sub-total">
+                        <td><b>총 야간 인건비 합계</b></td>
+                        <td id="total-labor-detail" class="text-danger">0</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="info-box">
+                야간수당 단가: 1시간당 <b>5,160원</b> (10,320원 × 0.5)
+            </div>
+        </section>
+
+        <section>
+            <h2>4. 수지 분석 및 효율 안내</h2>
+            <table>
+                <tr><th>일일 총 야간시간</th><td id="total-hours-day-val">0 h</td></tr>
+                <tr><th>일일 가산 인정 인원</th><td id="add-staff-val">0 명</td></tr>
+                <tr><th>일일 절사(버려지는) 시간</th><td id="waste-hours" class="text-danger">0 h</td></tr>
+                <tr class="sub-total">
+                    <td><b>최종 야간 가산금 (월)</b></td>
+                    <td id="final-income-val" class="highlight">0</td>
+                </tr>
+            </table>
+            
+            <div id="analysis-msg" class="analysis-res">
+                계산 중...
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+    function calc() {
+        // --- 1. 기준점 계산 (30일 제외하여 수정) ---
+        const c1 = Number(document.getElementById('in-c1').value);
+        const c2 = Number(document.getElementById('in-c2').value);
+        const c3 = Number(document.getElementById('in-c3').value);
+        
+        const r1_day = 93070;
+        const r2_day = 86340;
+        const r3_day = 81540;
+
+        const totalCnt = c1 + c2 + c3;
+        const totalMonthInc = (c1 * r1_day + c2 * r2_day + c3 * r3_day) * 30;
+        
+        // 월 기준점 산정: (월 총수입 / 인원) * 0.8
+        const basePoint = totalCnt > 0 ? Math.floor((totalMonthInc / totalCnt) * 0.8) : 0;
+
+        document.getElementById('res-c1').innerText = (c1 * r1_day * 30).toLocaleString();
+        document.getElementById('res-c2').innerText = (c2 * r2_day * 30).toLocaleString();
+        document.getElementById('res-c3').innerText = (c3 * r3_day * 30).toLocaleString();
+        document.getElementById('total-cnt').innerText = totalCnt;
+        document.getElementById('total-inc').innerText = totalMonthInc.toLocaleString();
+        document.getElementById('base-point-val').innerText = basePoint.toLocaleString();
+        document.getElementById('disp-base-point').innerText = basePoint.toLocaleString();
+
+        // --- 2. 야간 근로 시간 및 순수 수당 계산 ---
+        const workH = Number(document.getElementById('work-h').value);
+        const staffC = Number(document.getElementById('staff-c').value);
+        const dayHours = workH * staffC;
+        const monthHours = dayHours * 30;
+
+        document.getElementById('total-hours-day').innerText = dayHours + " h";
+        document.getElementById('total-hours-day-val').innerText = dayHours + " h";
+
+        const unitWage = 10320 * 0.5; // 5,160원
+        const pureDayWage = Math.floor(dayHours * unitWage);
+        const pureMonthWage = pureDayWage * 30;
+
+        document.getElementById('labor-day-pure').innerText = pureDayWage.toLocaleString();
+        document.getElementById('labor-month-pure').innerText = pureMonthWage.toLocaleString();
+
+        // --- 3. 인건비 상세 (총 야간 인건비 합계로 명칭 수정) ---
+        const insWage = Math.floor(pureMonthWage * 0.09);
+        const retWage = Math.floor(pureMonthWage / 12);
+        const totalLabor = pureMonthWage + insWage + retWage;
+
+        document.getElementById('pure-wage').innerText = pureMonthWage.toLocaleString();
+        document.getElementById('ins-wage').innerText = insWage.toLocaleString();
+        document.getElementById('ret-wage').innerText = retWage.toLocaleString();
+        document.getElementById('total-labor-detail').innerText = totalLabor.toLocaleString();
+        document.getElementById('disp-labor').innerText = totalLabor.toLocaleString();
+
+        // --- 4. 가산 수입 계산 (일일 평균 기준 절사 로직) ---
+        // 공단 지침: 일일 야간시간 합계를 7로 나눈 몫(절사)이 일일 가산인원
+        const addStaffCntDay = Math.floor(dayHours / 7); 
+        const wasteHoursDay = dayHours % 7;
+        
+        // 최종 월 가산금 = 일일 가산인원 * 0.9점 * 기준점
+        const totalIncome = Math.floor(addStaffCntDay * 0.9 * basePoint);
+
+        document.getElementById('add-staff-val').innerText = addStaffCntDay + " 명";
+        document.getElementById('waste-hours').innerText = wasteHoursDay + " h";
+        document.getElementById('final-income-val').innerText = totalIncome.toLocaleString();
+        document.getElementById('disp-income').innerText = totalIncome.toLocaleString();
+
+        // --- 5. 최종 분석 ---
+        const profit = totalIncome - totalLabor;
+        const dispProfit = document.getElementById('disp-profit');
+        const profitCard = document.getElementById('profit-card');
+        const analysisMsg = document.getElementById('analysis-msg');
+        
+        dispProfit.innerText = profit.toLocaleString();
+
+        if (profit >= 0) {
+            profitCard.className = "card result-plus";
+            analysisMsg.style.background = "#e8f5e9";
+            analysisMsg.style.color = "var(--success)";
+            analysisMsg.innerHTML = `✅ <b>수지 양호:</b> 가산금이 인건비보다 <b>${profit.toLocaleString()}원</b> 더 많습니다.`;
+        } else {
+            profitCard.className = "card result-minus";
+            analysisMsg.style.background = "#ffebee";
+            analysisMsg.style.color = "var(--danger)";
+            analysisMsg.innerHTML = `⚠️ <b>손실 발생:</b> 인건비가 가산금보다 <b>${Math.abs(profit).toLocaleString()}원</b> 더 많습니다.`;
+        }
+
+        if (wasteHoursDay > 0) {
+            const gap = 7 - wasteHoursDay;
+            analysisMsg.innerHTML += `<br><small style="color:#666">💡 일일 <b>${gap}시간</b>만 더 확보하면 가산 인원이 1명 늘어납니다.</small>`;
+        }
+    }
+
+    window.onload = calc;
+</script>
+
+</body>
+</html>
