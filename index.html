@@ -3,279 +3,455 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>요양원 경영 컨설팅 통합 시뮬레이터</title>
+    <title>요양원 경영 통합 시뮬레이터</title>
     <style>
         :root {
             --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --danger: #e74c3c; --bg: #f1f4f9;
         }
         body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; padding: 0; color: #333; }
         
-        /* 탭 스타일 */
+        /* 통합 탭 네비게이션 */
         .tab-nav { background: var(--primary); display: flex; justify-content: center; padding: 10px 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
-        .tab-btn { background: none; border: none; color: rgba(255,255,255,0.6); padding: 10px 25px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.3s; border-radius: 8px; margin: 0 5px; }
+        .tab-btn { background: none; border: none; color: rgba(255,255,255,0.6); padding: 12px 25px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.3s; border-radius: 8px; margin: 0 10px; }
         .tab-btn.active { color: white; background: rgba(255,255,255,0.15); box-shadow: inset 0 -3px 0 var(--accent); }
         .tab-btn:hover { color: white; }
 
-        .container { max-width: 1400px; margin: 20px auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .container { max-width: 98%; margin: 20px auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* 공통 스타일 */
+        /* 공통 스타일 유지 */
         .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
-        .card { background: var(--primary); color: white; padding: 18px; border-radius: 12px; text-align: center; }
-        .card h3 { margin: 0; font-size: 0.9rem; opacity: 0.8; margin-bottom: 8px; }
-        .card .value { font-size: 1.6rem; font-weight: bold; }
-        .card.pass { background: var(--success); }
-        .card.fail { background: var(--danger); }
-        .highlight-card { background: #fff; color: var(--primary); border: 2px solid var(--accent); }
-        .highlight-card .value { color: var(--accent); }
-
-        .main-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 25px; }
+        .card { background: var(--primary); color: white; padding: 15px; border-radius: 12px; text-align: center; }
+        .card h3 { margin: 0; font-size: 0.9rem; opacity: 0.8; }
+        .card .value { font-size: 1.5rem; font-weight: bold; margin: 5px 0; color: #fff; }
+        .main-grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 25px; }
         section { background: #fff; border: 1px solid #e0e6ed; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
         h2 { font-size: 1.2rem; color: var(--primary); border-left: 5px solid var(--accent); padding-left: 10px; margin-bottom: 15px; }
-
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #eee; padding: 10px 5px; text-align: center; font-size: 0.88rem; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        th, td { border: 1px solid #eee; padding: 8px 4px; text-align: center; font-size: 0.85rem; }
         th { background: #f8f9fa; color: #666; }
-        input { width: 85%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; text-align: right; font-weight: bold; }
-        
-        .info-box { background: #f1f9ff; border: 1px solid #d1e9ff; padding: 15px; border-radius: 8px; font-size: 0.85rem; line-height: 1.6; margin-top: 10px; }
-        .sub-total { background: #fdf6e3; font-weight: bold; }
-        .status-badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; margin-top: 5px; background: rgba(255,255,255,0.2); }
-        .analysis-box { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; text-align: center; font-weight: bold; }
+        input { width: 90%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; text-align: right; font-weight: bold; font-family: inherit; }
+        .sub-total { background: #f8f9fa; font-weight: bold; }
+        .status-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; font-weight: bold; margin-top: 5px; }
+        .pass { background: #2ecc71; color: white; }
+        .fail { background: #e74c3c; color: white; }
+        .analysis-box { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; }
         input.error { border: 2px solid var(--danger); background: #fff5f5; }
+        .highlight { color: var(--accent); font-weight: bold; }
+        .text-danger { color: var(--danger); }
+        .analysis-res { font-size: 1.2rem; font-weight: bold; margin-top: 15px; text-align: center; padding: 15px; border-radius: 8px; }
     </style>
 </head>
 <body>
 
 <nav class="tab-nav">
-    <button class="tab-btn active" onclick="openTab('main-sim')">📊 종합 인건비 비율 분석</button>
-    <button class="tab-btn" onclick="openTab('night-sim')">🌙 야간 근무 수지 분석</button>
+    <button class="tab-btn active" onclick="openTab('tab-ratio')">📊 인건비 지출 비율 분석</button>
+    <button class="tab-btn" onclick="openTab('tab-night')">🌙 야간 근무 수지 분석</button>
 </nav>
 
 <div class="container">
     
-    <div id="main-sim" class="tab-content active">
-        <h1 style="text-align:center; color:var(--primary); margin-top:0;">요양원 인건비 지출 비율 분석</h1>
-        
+    <div id="tab-ratio" class="tab-content active">
+        <h1 style="text-align:center; color:var(--primary); margin-top:0;">요양원 인건비 지출 비율 시뮬레이터</h1>
         <div class="dashboard">
             <div class="card"><h3>총 입소 인원</h3><div id="top-inmates" class="value">0 명</div></div>
             <div class="card"><h3>총 급여 수입 (A)</h3><div id="top-total-income" class="value">0</div></div>
             <div class="card"><h3>총 인건비 지출 (B)</h3><div id="top-total-labor" class="value">0</div></div>
             <div id="ratio-card" class="card">
-                <h3>지출 비율 (B/A)</h3>
-                <div id="top-ratio" class="value">0%</div>
+                <h3>인건비 지출 비율 (B/A)</h3>
+                <div id="top-ratio" style="font-size: 1.8rem; font-weight: bold;">0%</div>
                 <div id="status-badge" class="status-badge">계산 중...</div>
             </div>
         </div>
-
         <div class="main-grid">
             <div>
                 <section>
-                    <h2>1. 수입 설정</h2>
+                    <h2>1. 수입 설정 (30일 기준)</h2>
                     <table>
                         <thead><tr><th>등급</th><th>인원</th><th>수가</th><th>월 수입</th></tr></thead>
                         <tbody>
-                            <tr><td>일반 1등급</td><td><input type="number" id="in-c1" value="5" oninput="mainCalc()"></td><td>93,070</td><td id="res-c1">0</td></tr>
-                            <tr><td>일반 2등급</td><td><input type="number" id="in-c2" value="13" oninput="mainCalc()"></td><td>86,340</td><td id="res-c2">0</td></tr>
-                            <tr><td>일반 3~5등급</td><td><input type="number" id="in-c3" value="34" oninput="mainCalc()"></td><td>81,540</td><td id="res-c3">0</td></tr>
-                            <tr><td>치매 2등급</td><td><input type="number" id="in-cd2" value="0" oninput="mainCalc()"></td><td>96,950</td><td id="res-cd2">0</td></tr>
-                            <tr><td>치매 3~5등급</td><td><input type="number" id="in-cd3" value="0" oninput="mainCalc()"></td><td>89,400</td><td id="res-cd3">0</td></tr>
+                            <tr><td>일반 1등급</td><td><input type="number" id="in-c1" value="5" oninput="calculate()"></td><td>93,070</td><td id="res-c1">0</td></tr>
+                            <tr><td>일반 2등급</td><td><input type="number" id="in-c2" value="13" oninput="calculate()"></td><td>86,340</td><td id="res-c2">0</td></tr>
+                            <tr><td>일반 3~5등급</td><td><input type="number" id="in-c3" value="34" oninput="calculate()"></td><td>81,540</td><td id="res-c3">0</td></tr>
+                            <tr><td>치매전담 2등급</td><td><input type="number" id="in-cd2" value="0" oninput="calculate()"></td><td>96,950</td><td id="res-cd2">0</td></tr>
+                            <tr><td>치매전담 3~5등급</td><td><input type="number" id="in-cd3" value="48" oninput="calculate()"></td><td>89,400</td><td id="res-cd3">0</td></tr>
                             <tr class="sub-total"><td>합계</td><td id="total-cnt">0</td><td>-</td><td id="total-base-inc">0</td></tr>
                         </tbody>
                     </table>
                 </section>
-                <section>
-                    <h2>2. 가산 수입 (분모 합산)</h2>
+                <section style="margin-top:20px;">
+                    <h2>2. 가산 수입 상세 (점수 포함)</h2>
                     <table style="background:#f1f9ff">
-                        <tr><td>야간 가산 (0.9점)</td><td id="res-night-inc">0</td></tr>
-                        <tr><td>인력추가 가산</td><td id="res-staff-inc">0</td></tr>
-                        <tr><td>간호사 가산</td><td id="res-nurse-bonus-inc">0</td></tr>
-                        <tr class="sub-total"><td>가산 수입 합계</td><td id="res-total-add-inc">0</td></tr>
+                        <tr><th>항목</th><th>적용 점수</th><th>가산 수입액</th></tr>
+                        <tr><th>가산 기준점 (1점당)</th><td colspan="2" id="base-point-val" style="font-weight:bold; color:var(--accent); text-align:right; padding-right:15px;">0</td></tr>
+                        <tr><td>야간 가산 (인당 0.9점)</td><td id="score-night">0 점</td><td id="res-night-inc">0</td></tr>
+                        <tr><td>인력추가 가산 (일반실 한도내)</td><td id="score-staff">0 점</td><td id="res-staff-inc">0</td></tr>
+                        <tr><td>치매전담 요양보호사 가산</td><td id="score-dem-care">0 점</td><td id="res-dem-care-inc">0</td></tr>
+                        <tr><td>간호사 가산 (인당0.6+시설0.2)</td><td id="score-nurse">0 점</td><td id="res-nurse-bonus-inc">0</td></tr>
+                        <tr class="sub-total"><th>총 점수 및 가산 합계</th><td id="score-total" style="color:#e67e22;">0 점</td><td id="res-total-add-inc">0</td></tr>
                     </table>
                 </section>
             </div>
             <div>
                 <section>
-                    <h2>3. 인건비 지출 설정 (분자)</h2>
-                    <table id="staff-table">
-                        <thead><tr><th>직종</th><th>배치</th><th>기본급</th><th>인건비총계</th></tr></thead>
-                        <tbody id="staff-body"></tbody>
+                    <h2>3. 인건비 설정 (야간수당 포함)</h2>
+                    <table>
+                        <thead>
+                            <tr><th>직종</th><th>배치</th><th>법정</th><th>기본급</th><th>급여소계</th><th>4대보험(9%)</th><th>퇴직(1/12)</th><th>인건비총계</th></tr>
+                        </thead>
+                        <tbody id="staff-table"></tbody>
+                        <tfoot style="background:#fff9db">
+                            <tr>
+                                <td><b>야간인력</b></td>
+                                <td><input type="number" id="night-cnt" value="1" oninput="calculate()"></td>
+                                <td>-</td>
+                                <td><input type="number" id="night-wage-info" value="1083600" readonly style="background:#eee"></td>
+                                <td id="night-base-sum">0</td>
+                                <td id="night-ins">0</td>
+                                <td id="night-ret">0</td>
+                                <td id="night-total" style="font-weight:bold; color:var(--danger)">0</td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </section>
-                <section>
-                    <div class="analysis-box" id="main-analysis-text">
-                        데이터를 입력하면 분석 결과가 표시됩니다.
+                <section style="margin-top:20px;">
+                    <h2>4. 인건비 지출 비율 분석</h2>
+                    <div class="analysis-box">
+                        <p><b>권장 인건비 총액 (62.6%):</b> <span id="target-labor-val" style="color:var(--success); font-weight:bold;">0</span> 원</p>
+                        <p><b>현재 1인당 평균 인건비:</b> <span id="avg-labor-val" style="font-weight:bold;">0</span> 원</p>
+                        <hr>
+                        <p id="analysis-text" style="margin:0; font-size:0.9rem;"></p>
                     </div>
                 </section>
             </div>
         </div>
     </div>
 
-    <div id="night-sim" class="tab-content">
-        <h1 style="text-align:center; color:var(--primary); margin-top:0;">야간 근무 인력배치 최적화</h1>
-        
+    <div id="tab-night" class="tab-content">
+        <h1 style="text-align:center; color:var(--primary); margin-top:0;">🌙 야간근무 배치 및 수지분석 시뮬레이터</h1>
         <div class="dashboard">
-            <div class="card"><h3>야간 가산 수입 (A)</h3><div id="n-disp-income" class="value">0</div></div>
-            <div class="card"><h3>야간 인건비 총계 (B)</h3><div id="n-disp-labor" class="value">0</div></div>
-            <div id="n-profit-card" class="card"><h3>야간 운영 수지 (A-B)</h3><div id="n-disp-profit" class="value">0</div></div>
-            <div class="card highlight-card"><h3>가산 기준점 (1점)</h3><div id="n-disp-base-point" class="value">0</div></div>
+            <div class="card"><h3>야간 가산 수입 (A)</h3><div id="n-disp-income" class="value">0</div><small>한달 총액</small></div>
+            <div class="card"><h3>야간 인건비 총계 (B)</h3><div id="n-disp-labor" class="value">0</div><small>보험/퇴직금 포함</small></div>
+            <div id="n-profit-card" class="card"><h3>야간 운영 수지 (A - B)</h3><div id="n-disp-profit" class="value">0</div><small>수익/손실 분석</small></div>
+            <div class="card highlight"><h3>가산 기준점 (1점)</h3><div id="n-disp-base-point" class="value">0</div><small>(월 수가 합계 / 인원) × 0.8</small></div>
         </div>
-
-        <div class="main-grid">
-            <div>
-                <section>
-                    <h2>1. 기준점 산출 (일반실 구성)</h2>
-                    <table>
-                        <thead><tr><th>등급</th><th>인원</th><th>일당수가</th><th>월 수입액</th></tr></thead>
-                        <tbody>
-                            <tr><td>1등급</td><td><input type="number" id="n-in-c1" value="5" oninput="nightCalc()"></td><td>93,070</td><td id="n-res-c1">0</td></tr>
-                            <tr><td>2등급</td><td><input type="number" id="n-in-c2" value="13" oninput="nightCalc()"></td><td>86,340</td><td id="n-res-c2">0</td></tr>
-                            <tr><td>3~5등급</td><td><input type="number" id="n-in-c3" value="34" oninput="nightCalc()"></td><td>81,540</td><td id="n-res-c3">0</td></tr>
-                            <tr class="sub-total"><td>합계</td><td id="n-total-cnt">0</td><td>-</td><td id="n-total-inc">0</td></tr>
-                        </tbody>
-                    </table>
-                </section>
-            </div>
-            <div>
-                <section>
-                    <h2>2. 야간 근무 배치 및 인건비</h2>
-                    <table>
-                        <tr><th>야간 실근무(h)</th><td><input type="number" id="n-work-h" value="5" oninput="nightCalc()"></td></tr>
-                        <tr><th>야간 인원(명)</th><td><input type="number" id="n-staff-c" value="3" oninput="nightCalc()"></td></tr>
-                        <tr class="sub-total"><th>일일 합계 시간</th><td id="n-total-hours-day">0 h</td></tr>
-                    </table>
-                    <div class="info-box">
-                        총 야간 인건비(보험/퇴직금 포함): <b id="n-total-labor-detail">0</b>원
-                    </div>
-                </section>
-                <section>
-                    <div id="n-analysis-msg" class="analysis-box">분석 중...</div>
-                </section>
-            </div>
+        <div class="main-grid" style="grid-template-columns: 1fr 1fr;">
+            <section>
+                <h2>1. 가산 기준점 산출 (일반실 등급 구성)</h2>
+                <table>
+                    <thead><tr><th>등급</th><th>인원(명)</th><th>일당 수가(원)</th><th>월 수입액(30일)</th></tr></thead>
+                    <tbody>
+                        <tr><td>1등급</td><td><input type="number" id="n-in-c1" value="5" oninput="calcNight()"></td><td>93,070</td><td id="n-res-c1">0</td></tr>
+                        <tr><td>2등급</td><td><input type="number" id="n-in-c2" value="13" oninput="calcNight()"></td><td>86,340</td><td id="n-res-c2">0</td></tr>
+                        <tr><td>3~5등급</td><td><input type="number" id="n-in-c3" value="34" oninput="calcNight()"></td><td>81,540</td><td id="n-res-c3">0</td></tr>
+                        <tr class="sub-total"><td><b>합계</b></td><td id="n-total-cnt">0</td><td>-</td><td id="n-total-inc">0</td></tr>
+                    </tbody>
+                </table>
+                <div class="info-box">기준금액 = (일반실 월 총수가 / 입소자 수) × 0.8<br>현재 산출된 1점당 금액: <span id="n-base-point-val" class="highlight">0</span> 원</div>
+            </section>
+            <section>
+                <h2>2. 야간 근무자 시간 배치</h2>
+                <p style="font-size:0.85rem; color:#666; margin-bottom:10px;">* 22시 ~ 06시 사이 실제 근로시간(휴게 제외)을 입력하세요.</p>
+                <table>
+                    <thead><tr><th>구분</th><th>실근무(h)</th><th>인원(명)</th><th>합계 시간(일)</th></tr></thead>
+                    <tbody>
+                        <tr><td><b>야간 인력</b></td><td><input type="number" id="n-work-h" value="5" oninput="calcNight()"></td><td><input type="number" id="n-staff-c" value="3" oninput="calcNight()"></td><td id="n-total-hours-day" style="font-weight:bold; color:var(--accent);">0 h</td></tr>
+                    </tbody>
+                </table>
+                <div class="info-box" style="background:#fff9db; border-color:#ffeeba;"><b>[지출 분석 - 순수 야간수당]</b><br>일일 야간수당: <span id="n-labor-day-pure">0</span> 원<br>월 야간수당: <span id="n-labor-month-pure">0</span> 원</div>
+            </section>
+            <section>
+                <h2>3. 인건비 상세 (4대보험/퇴직금 포함)</h2>
+                <table>
+                    <thead><tr><th>항목</th><th>금액 (월 기준)</th></tr></thead>
+                    <tbody>
+                        <tr><td>순수 야간수당 (기본)</td><td id="n-pure-wage">0</td></tr>
+                        <tr><td>4대보험 회사부담분 (9%)</td><td id="n-ins-wage">0</td></tr>
+                        <tr><td>퇴직적립금 (1/12)</td><td id="n-ret-wage">0</td></tr>
+                        <tr class="sub-total"><td><b>총 야간 인건비 합계</b></td><td id="n-total-labor-detail" class="text-danger">0</td></tr>
+                    </tbody>
+                </table>
+                <div class="info-box">야간수당 단가: 1시간당 <b>5,160원</b> (10,320원 × 0.5)</div>
+            </section>
+            <section>
+                <h2>4. 수지 분석 및 효율 안내</h2>
+                <table>
+                    <tr><th>일일 총 야간시간</th><td id="n-total-hours-day-val">0 h</td></tr>
+                    <tr><th>일일 가산 인정 인원</th><td id="n-add-staff-val">0 명</td></tr>
+                    <tr><th>일일 절사(버려지는) 시간</th><td id="n-waste-hours" class="text-danger">0 h</td></tr>
+                    <tr class="sub-total"><td><b>최종 야간 가산금 (월)</b></td><td id="n-final-income-val" class="highlight">0</td></tr>
+                </table>
+                <div id="n-analysis-msg" class="analysis-res">계산 중...</div>
+            </section>
         </div>
     </div>
-
 </div>
 
 <script>
-    // 탭 전환 함수
-    function openTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        event.currentTarget.classList.add('active');
-        if(tabId === 'main-sim') mainCalc(); else nightCalc();
+    // 탭 전환 로직
+    function openTab(tabName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].classList.remove("active");
+        }
+        tablinks = document.getElementsByClassName("tab-btn");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].classList.remove("active");
+        }
+        document.getElementById(tabName).classList.add("active");
+        event.currentTarget.classList.add("active");
+        
+        // 탭 전환 시 계산 다시 실행
+        if(tabName === 'tab-ratio') calculate();
+        else calcNight();
     }
 
-    // --- 1. 메인 시뮬레이터 로직 ---
+    // --- 파일 1: 인건비 비율 시뮬레이터 로직 ---
     const staffMeta = {
-        sw: { name: '사회복지사', pay: 2500000, def: 1 },
-        nurse: { name: '간호(조무)사', pay: 2400000, def: 2 },
-        care: { name: '요양보호사', pay: 2156880, def: 25 },
-        etc: { name: '기타/사무', pay: 2100000, def: 1 }
+        sw: { name: '사회복지사', pay: 2500000 },
+        pt: { name: '물리치료사', pay: 2600000 },
+        ot: { name: '작업치료사', pay: 2400000 },
+        nurse: { name: '간호사', pay: 2600000 },
+        nurse_sub: { name: '간호조무사', pay: 2300000 },
+        care: { name: '요양보호사(일반)', pay: 2156880 },
+        care_dem: { name: '요양보호사(치매)', pay: 2250000 }
     };
 
-    function initMain() {
-        const body = document.getElementById('staff-body');
+    function init() {
+        const body = document.getElementById('staff-table');
+        body.innerHTML = '';
         Object.entries(staffMeta).forEach(([key, info]) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td align="left"><b>${info.name}</b></td>
-                <td><input type="number" id="m-cnt-${key}" value="${info.def}" oninput="mainCalc()"></td>
-                <td><input type="number" id="m-pay-${key}" value="${info.pay}" oninput="mainCalc()"></td>
-                <td id="m-total-${key}">0</td>
+                <td><input type="number" id="cnt-${key}" value="${key==='care'?25:1}" oninput="calculate()"></td>
+                <td id="leg-${key}">0</td>
+                <td><input type="number" id="pay-${key}" value="${info.pay}" oninput="calculate()"></td>
+                <td id="base-sum-${key}">0</td>
+                <td id="ins-${key}">0</td>
+                <td id="ret-${key}">0</td>
+                <td id="total-${key}" style="font-weight:bold">0</td>
             `;
             body.appendChild(tr);
         });
-        mainCalc();
+        calculate();
+        calcNight();
     }
 
-    function mainCalc() {
-        const p = { c1:93070, c2:86340, c3:81540, cd2:96950, cd3:89400 };
-        let inmates = 0, baseInc = 0;
+    function calculate() {
+        const p_list = { c1:93070, c2:86340, c3:81540, cd2:96950, cd3:89400 };
+        let inmates = 0, genInmates = 0, demInmates = 0, genInc = 0, baseInc = 0;
+
         ['c1', 'c2', 'c3', 'cd2', 'cd3'].forEach(k => {
             const cnt = Number(document.getElementById('in-'+k).value);
-            const inc = cnt * p[k] * 30;
+            const inc = cnt * p_list[k] * 30;
             document.getElementById('res-'+k).innerText = inc.toLocaleString();
-            inmates += cnt; baseInc += inc;
+            inmates += cnt;
+            baseInc += inc;
+            if(!k.startsWith('cd')) { genInmates += cnt; genInc += inc; }
+            else { demInmates += cnt; }
         });
-        document.getElementById('total-cnt').innerText = inmates;
-        document.getElementById('top-inmates').innerText = inmates + " 명";
 
-        // 가산 수입 (단순화된 예시 로직)
-        const addInc = Math.floor(baseInc * 0.05); // 평균 5% 가산 가정
-        document.getElementById('res-total-add-inc').innerText = addInc.toLocaleString();
-        const totalIncome = baseInc + addInc;
-        document.getElementById('top-total-income').innerText = totalIncome.toLocaleString();
+        document.getElementById('total-cnt').innerText = inmates + " 명";
+        document.getElementById('top-inmates').innerText = inmates + " 명";
+        document.getElementById('total-base-inc').innerText = baseInc.toLocaleString();
+
+        let scoreLimit = inmates < 30 ? 2.6 : inmates < 50 ? 4.0 : inmates < 90 ? 6.6 : 7.8;
+        const legal = {
+            sw: inmates > 100 ? 2 : 1,
+            pt_ot: inmates >= 30 ? 1 : 0,
+            nurse_total: inmates <= 30 ? 1 : Math.ceil(inmates / 25),
+            care: Math.ceil(genInmates / 2.1),
+            care_dem: Math.ceil(demInmates / 2.0)
+        };
 
         let totalLabor = 0;
-        const overhead = 1 + 0.09 + (1/12);
-        Object.keys(staffMeta).forEach(key => {
-            const cnt = Number(document.getElementById('m-cnt-'+key).value);
-            const pay = Number(document.getElementById('m-pay-'+key).value);
-            const sum = Math.floor(pay * cnt * overhead);
-            document.getElementById('m-total-'+key).innerText = sum.toLocaleString();
-            totalLabor += sum;
-        });
-        document.getElementById('top-total-labor').innerText = totalLabor.toLocaleString();
+        let genAddScore = 0;
+        let demCareAddScore = 0;
+        let totalStaffCount = 0;
 
-        const ratio = totalIncome > 0 ? (totalLabor / totalIncome * 100).toFixed(1) : 0;
-        document.getElementById('top-ratio').innerText = ratio + "%";
+        const c_nurse = Number(document.getElementById('cnt-nurse').value);
+        const c_nurse_sub = Number(document.getElementById('cnt-nurse_sub').value);
+        const c_pt = Number(document.getElementById('cnt-pt').value);
+        const c_ot = Number(document.getElementById('cnt-ot').value);
+
+        Object.entries(staffMeta).forEach(([key, info]) => {
+            const cnt = Number(document.getElementById('cnt-'+key).value);
+            const pay = Number(document.getElementById('pay-'+key).value);
+            const input = document.getElementById('cnt-'+key);
+            totalStaffCount += cnt;
+
+            let legNum = (key === 'sw') ? legal.sw : (key === 'care') ? legal.care : (key === 'care_dem') ? legal.care_dem : 0;
+            if(key === 'nurse' || key === 'nurse_sub') legNum = legal.nurse_total;
+            if(key === 'pt' || key === 'ot') legNum = legal.pt_ot;
+            
+            document.getElementById('leg-'+key).innerText = legNum;
+            if((key === 'nurse' || key === 'nurse_sub' ? c_nurse+c_nurse_sub : key === 'pt' || key === 'ot' ? c_pt+c_ot : cnt) < legNum) input.classList.add('error'); else input.classList.remove('error');
+
+            const baseSum = pay * cnt;
+            const ins = Math.floor(baseSum * 0.09);
+            const ret = Math.floor(baseSum / 12);
+            document.getElementById(`base-sum-${key}`).innerText = baseSum.toLocaleString();
+            document.getElementById(`ins-${key}`).innerText = ins.toLocaleString();
+            document.getElementById(`ret-${key}`).innerText = ret.toLocaleString();
+            document.getElementById(`total-${key}`).innerText = (baseSum + ins + ret).toLocaleString();
+            totalLabor += (baseSum + ins + ret);
+
+            if(key === 'sw' && cnt > legal.sw) genAddScore += (cnt - legal.sw) * 1.4;
+            if(key === 'care_dem' && cnt > legal.care_dem) demCareAddScore += (cnt - legal.care_dem) * 1.3;
+        });
+
+        if((c_nurse + c_nurse_sub) > legal.nurse_total) genAddScore += (c_nurse + c_nurse_sub - legal.nurse_total) * 1.2;
+        if((c_pt + c_ot) > legal.pt_ot) genAddScore += (c_pt + c_ot - legal.pt_ot) * 1.4;
+
+        const nCnt = Number(document.getElementById('night-cnt').value);
+        const nBaseSum = 1083600 * nCnt;
+        const nIns = Math.floor(nBaseSum * 0.09);
+        const nRet = Math.floor(nBaseSum / 12);
+        const nTotal = nBaseSum + nIns + nRet;
+        document.getElementById('night-base-sum').innerText = nBaseSum.toLocaleString();
+        document.getElementById('night-ins').innerText = nIns.toLocaleString();
+        document.getElementById('night-ret').innerText = nRet.toLocaleString();
+        document.getElementById('night-total').innerText = nTotal.toLocaleString();
+        totalLabor += nTotal;
+        totalStaffCount += nCnt;
+
+        const basePoint = genInmates > 0 ? Math.floor((genInc / genInmates) * 0.8) : 0;
+        document.getElementById('base-point-val').innerText = basePoint.toLocaleString();
+
+        const finalNightScore = nCnt * 0.9;
+        const finalGenScore = Math.min(genAddScore, scoreLimit);
+        const finalDemScore = demCareAddScore;
+        const finalNurseScore = c_nurse > 0 ? (c_nurse * 0.6) + 0.2 : 0;
+        const totalScore = finalNightScore + finalGenScore + finalDemScore + finalNurseScore;
+
+        document.getElementById('score-night').innerText = finalNightScore.toFixed(1) + " 점";
+        document.getElementById('score-staff').innerText = finalGenScore.toFixed(1) + " 점";
+        document.getElementById('score-dem-care').innerText = finalDemScore.toFixed(1) + " 점";
+        document.getElementById('score-nurse').innerText = finalNurseScore.toFixed(1) + " 점";
+        document.getElementById('score-total').innerText = totalScore.toFixed(1) + " 점";
+
+        const resNightInc = Math.floor(basePoint * finalNightScore);
+        const resStaffInc = Math.floor(basePoint * finalGenScore);
+        const resDemCareInc = Math.floor(basePoint * finalDemScore);
+        const resNurseBonusInc = Math.floor(basePoint * finalNurseScore);
+
+        document.getElementById('res-night-inc').innerText = resNightInc.toLocaleString();
+        document.getElementById('res-staff-inc').innerText = resStaffInc.toLocaleString();
+        document.getElementById('res-dem-care-inc').innerText = resDemCareInc.toLocaleString();
+        document.getElementById('res-nurse-bonus-inc').innerText = resNurseBonusInc.toLocaleString();
+
+        const totalAddInc = resNightInc + resStaffInc + resDemCareInc + resNurseBonusInc;
+        document.getElementById('res-total-add-inc').innerText = totalAddInc.toLocaleString();
         
-        const card = document.getElementById('ratio-card');
+        const totalFinalInc = baseInc + totalAddInc;
+
+        document.getElementById('top-total-income').innerText = totalFinalInc.toLocaleString();
+        document.getElementById('top-total-labor').innerText = totalLabor.toLocaleString();
+        const ratio = totalFinalInc > 0 ? (totalLabor / totalFinalInc * 100).toFixed(1) : 0;
+        document.getElementById('top-ratio').innerText = ratio + "%";
+
+        const targetLabor = Math.floor(totalFinalInc * 0.626);
+        document.getElementById('target-labor-val').innerText = targetLabor.toLocaleString();
+        document.getElementById('avg-labor-val').innerText = totalStaffCount > 0 ? Math.floor(totalLabor / totalStaffCount).toLocaleString() : 0;
+
         const badge = document.getElementById('status-badge');
+        const card = document.getElementById('ratio-card');
+        const analysis = document.getElementById('analysis-text');
+
         if(ratio >= 62.6) {
-            card.className = "card pass"; badge.innerText = "준수 (PASS)";
+            badge.innerText = "준수 (PASS)"; badge.className = "status-badge pass";
+            card.style.background = "var(--success)";
+            analysis.innerHTML = `인건비 지출 비율 기준을 충족합니다. <br>권장 지출액 대비 <b>${(totalLabor - targetLabor).toLocaleString()}원</b> 추가 지출 중입니다.`;
         } else {
-            card.className = "card fail"; badge.innerText = "미달 (FAIL)";
+            badge.innerText = "미달 (FAIL)"; badge.className = "status-badge fail";
+            card.style.background = "var(--danger)";
+            analysis.innerHTML = `인건비 지출 비율이 낮습니다. <br>권장 기준 달성을 위해 <b>${(targetLabor - totalLabor).toLocaleString()}원</b> 이상의 추가 지출이 필요합니다.`;
         }
     }
 
-    // --- 2. 야간 시뮬레이터 로직 ---
-    function nightCalc() {
+    // --- 파일 2: 야간 수지 분석기 로직 ---
+    function calcNight() {
         const c1 = Number(document.getElementById('n-in-c1').value);
         const c2 = Number(document.getElementById('n-in-c2').value);
         const c3 = Number(document.getElementById('n-in-c3').value);
+        
+        const r1_day = 93070;
+        const r2_day = 86340;
+        const r3_day = 81540;
+
         const totalCnt = c1 + c2 + c3;
-        const totalMonthInc = (c1*93070 + c2*86340 + c3*81540) * 30;
+        const totalMonthInc = (c1 * r1_day + c2 * r2_day + c3 * r3_day) * 30;
         const basePoint = totalCnt > 0 ? Math.floor((totalMonthInc / totalCnt) * 0.8) : 0;
 
+        document.getElementById('n-res-c1').innerText = (c1 * r1_day * 30).toLocaleString();
+        document.getElementById('n-res-c2').innerText = (c2 * r2_day * 30).toLocaleString();
+        document.getElementById('n-res-c3').innerText = (c3 * r3_day * 30).toLocaleString();
         document.getElementById('n-total-cnt').innerText = totalCnt;
         document.getElementById('n-total-inc').innerText = totalMonthInc.toLocaleString();
+        document.getElementById('n-base-point-val').innerText = basePoint.toLocaleString();
         document.getElementById('n-disp-base-point').innerText = basePoint.toLocaleString();
 
         const workH = Number(document.getElementById('n-work-h').value);
         const staffC = Number(document.getElementById('n-staff-c').value);
         const dayHours = workH * staffC;
         const monthHours = dayHours * 30;
-        document.getElementById('n-total-hours-day').innerText = dayHours + " h";
 
-        const totalLabor = Math.floor(monthHours * 5160 * (1 + 0.09 + 1/12));
+        document.getElementById('n-total-hours-day').innerText = dayHours + " h";
+        document.getElementById('n-total-hours-day-val').innerText = dayHours + " h";
+
+        const unitWage = 10320 * 0.5;
+        const pureDayWage = Math.floor(dayHours * unitWage);
+        const pureMonthWage = pureDayWage * 30;
+
+        document.getElementById('n-labor-day-pure').innerText = pureDayWage.toLocaleString();
+        document.getElementById('n-labor-month-pure').innerText = pureMonthWage.toLocaleString();
+
+        const insWage = Math.floor(pureMonthWage * 0.09);
+        const retWage = Math.floor(pureMonthWage / 12);
+        const totalLabor = pureMonthWage + insWage + retWage;
+
+        document.getElementById('n-pure-wage').innerText = pureMonthWage.toLocaleString();
+        document.getElementById('n-ins-wage').innerText = insWage.toLocaleString();
+        document.getElementById('n-ret-wage').innerText = retWage.toLocaleString();
         document.getElementById('n-total-labor-detail').innerText = totalLabor.toLocaleString();
         document.getElementById('n-disp-labor').innerText = totalLabor.toLocaleString();
 
-        const addStaffDay = Math.floor(dayHours / 7);
-        const nightIncome = Math.floor(addStaffDay * 0.9 * basePoint);
-        document.getElementById('n-disp-income').innerText = nightIncome.toLocaleString();
+        const addStaffCntDay = Math.floor(dayHours / 7); 
+        const wasteHoursDay = dayHours % 7;
+        const totalIncome = Math.floor(addStaffCntDay * 0.9 * basePoint);
 
-        const profit = nightIncome - totalLabor;
+        document.getElementById('n-add-staff-val').innerText = addStaffCntDay + " 명";
+        document.getElementById('n-waste-hours').innerText = wasteHoursDay + " h";
+        document.getElementById('n-final-income-val').innerText = totalIncome.toLocaleString();
+        document.getElementById('n-disp-income').innerText = totalIncome.toLocaleString();
+
+        const profit = totalIncome - totalLabor;
         document.getElementById('n-disp-profit').innerText = profit.toLocaleString();
-        const card = document.getElementById('n-profit-card');
-        const msg = document.getElementById('n-analysis-msg');
+        const profitCard = document.getElementById('n-profit-card');
+        const analysisMsg = document.getElementById('n-analysis-msg');
         
-        if(profit >= 0) {
-            card.className = "card pass"; 
-            msg.innerHTML = `<span style="color:var(--success)">✅ 수지 양호: +${profit.toLocaleString()}원</span>`;
+        if (profit >= 0) {
+            profitCard.className = "card result-plus";
+            analysisMsg.style.background = "#e8f5e9";
+            analysisMsg.style.color = "var(--success)";
+            analysisMsg.innerHTML = `✅ <b>수지 양호:</b> 가산금이 인건비보다 <b>${profit.toLocaleString()}원</b> 더 많습니다.`;
         } else {
-            card.className = "card fail";
-            msg.innerHTML = `<span style="color:var(--danger)">⚠️ 손실 발생: ${profit.toLocaleString()}원</span>`;
+            profitCard.className = "card result-minus";
+            analysisMsg.style.background = "#ffebee";
+            analysisMsg.style.color = "var(--danger)";
+            analysisMsg.innerHTML = `⚠️ <b>손실 발생:</b> 인건비가 가산금보다 <b>${Math.abs(profit).toLocaleString()}원</b> 더 많습니다.`;
+        }
+
+        if (wasteHoursDay > 0) {
+            const gap = 7 - wasteHoursDay;
+            analysisMsg.innerHTML += `<br><small style="color:#666">💡 일일 <b>${gap}시간</b>만 더 확보하면 가산 인원이 1명 늘어납니다.</small>`;
         }
     }
 
-    window.onload = () => {
-        initMain();
-    };
+    window.onload = init;
 </script>
 </body>
 </html>
